@@ -1709,7 +1709,7 @@ if test "$CENTOS_RELEASE" -ne 8; then
   RPM_SIGN_CMD="./rpm-sign.exp"
 fi
 
-ac_config_files="$ac_config_files Makefile ndpi.spec"
+ac_config_files="$ac_config_files Makefile ndpi.spec libndpi-mock.spec"
 
 
 
@@ -2429,6 +2429,7 @@ do
   case $ac_config_target in
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "ndpi.spec") CONFIG_FILES="$CONFIG_FILES ndpi.spec" ;;
+    "libndpi-mock.spec") CONFIG_FILES="$CONFIG_FILES libndpi-mock.spec" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

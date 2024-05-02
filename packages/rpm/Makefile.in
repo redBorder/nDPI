@@ -1,15 +1,24 @@
 # 
 # RPM Build Process
 #
-APPL=ndpi
+APPL=libndpi
 PLATFORM=@PLATFORM@
 GIT_REVISION=@GIT_REVISION@
 PACKAGE_VERSION=@PACKAGE_VERSION@
 PACKAGE=$(APPL)-$(PACKAGE_VERSION)-$(GIT_REVISION).$(PLATFORM).rpm
 DEV_PACKAGE=$(APPL)-dev-$(PACKAGE_VERSION)-$(GIT_REVISION).$(PLATFORM).rpm
 PACKAGE_PATH=$(HOME)/rpmbuild/RPMS/$(PLATFORM)/$(PACKAGE)
+PACKAGE_NAME?=	$(APPL)
 
-package: build-rpm
+PACKAGE_NAME?=	$(APPL)
+VERSION?=	$(PACKAGE_VERSION)
+BUILD_NUMBER?= 1
+MOCK_CONFIG?=default
+RESULT_DIR?=pkgs
+
+all: rpm
+
+package: rpm
 
 build-src:
 	cd ../..; ./autogen.sh; ./configure; make clean; make
@@ -36,3 +45,51 @@ build-rpm: build-src cleanup-rpm
 	@rpm -qpl $(HOME)/rpmbuild/RPMS/$(PLATFORM)/$(PACKAGE)
 	@echo "The package is now available in $(HOME)/rpmbuild/RPMS/$(PLATFORM)/$(PACKAGE)"
 
+SOURCES:
+	mkdir -p SOURCES
+
+archive: SOURCES
+	rm -rf libndpi-@PACKAGE_VERSION@
+	mkdir -p libndpi-@PACKAGE_VERSION@/packages
+	cp libndpi-mock.spec.in libndpi-@PACKAGE_VERSION@/packages
+	cp ../../Makefile.* ../../libtool ../../configure* ../../config.* ../../install-sh ../../autogen.sh ../../libndpi.pc.in libndpi-@PACKAGE_VERSION@
+	cp -rf ../../src libndpi-@PACKAGE_VERSION@ 
+	cp -rf ../../example libndpi-@PACKAGE_VERSION@ 
+	cp -rf ../../tests libndpi-@PACKAGE_VERSION@ 
+	cp -rf ../../python libndpi-@PACKAGE_VERSION@ 
+	cp -rf ../../fuzz libndpi-@PACKAGE_VERSION@ 
+	cp -rf ../../packages/etc libndpi-@PACKAGE_VERSION@/packages
+	cp ../../CHANGELOG.md ../../COPYING libndpi-@PACKAGE_VERSION@ 
+	\rm -f libndpi-@PACKAGE_VERSION@/config.status
+	tar cvfz SOURCES/libndpi-@PACKAGE_VERSION@.tgz libndpi-@PACKAGE_VERSION@
+
+build_prepare: archive
+	mkdir -p $(RESULT_DIR)
+	rm -f $(RESULT_DIR)/$(PACKAGE_NAME)*.rpm
+
+srpm: build_prepare
+	/usr/bin/mock \
+		-r $(MOCK_CONFIG) \
+		--define "__version $(VERSION)" \
+		--define "__release $(BUILD_NUMBER)" \
+		--resultdir=$(RESULT_DIR) \
+		--buildsrpm \
+		--spec=${PACKAGE_NAME}-mock.spec \
+		--sources=SOURCES
+	@echo "======= Source RPM now available in $(RESULT_DIR) ======="
+
+rpm: srpm
+	/usr/bin/mock \
+		-r $(MOCK_CONFIG) \
+		--define "__version $(VERSION)"\
+		--define "__release $(BUILD_NUMBER)"\
+		--resultdir=$(RESULT_DIR) \
+		--rebuild $(RESULT_DIR)/$(PACKAGE_NAME)*.src.rpm
+	@echo "======= Binary RPMs now available in $(RESULT_DIR) ======="
+
+clean:
+	rm -rf SOURCES pkgs
+
+distclean: clean
+	rm -f build.log root.log state.log available_pkgs installed_pkgs \
+		*.rpm *.tar.gz
