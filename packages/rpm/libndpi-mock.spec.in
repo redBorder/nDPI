@@ -1,6 +1,6 @@
 Summary: L7 DPI library
 Name: libndpi
-Version: 3.4.0
+Version: @PACKAGE_VERSION@
 Release: %{__release}%{?dist}
 License: LGPL
 Group: Networking/Utilities
@@ -66,8 +66,8 @@ mkdir -p $RPM_BUILD_ROOT%{bindir}
 
 make DESTDIR=$RPM_BUILD_ROOT install;
 cp libndpi.pc $RPM_BUILD_ROOT%{libdir}/pkgconfig
-#cd $RPM_BUILD_ROOT%{libdir}/; ln -s libndpi.so.3.4.0 libndpi.so.3; cd -
-#cd $RPM_BUILD_ROOT%{libdir}/; ln -s libndpi.so.3.4.0 libndpi.so; cd -
+#cd $RPM_BUILD_ROOT%{libdir}/; ln -s libndpi.so.@PACKAGE_VERSION@ libndpi.so.@MAJOR_RELEASE@; cd -
+#cd $RPM_BUILD_ROOT%{libdir}/; ln -s libndpi.so.@PACKAGE_VERSION@ libndpi.so; cd -
 mkdir -p $RPM_BUILD_ROOT/etc/ld.so.conf.d
 cp packages/etc/ld.so.conf.d/ndpi.conf $RPM_BUILD_ROOT/etc/ld.so.conf.d
 rm -rf $RPM_BUILD_ROOT/usr/sbin/ndpi
@@ -81,8 +81,8 @@ rm -fr $RPM_BUILD_ROOT
 %defattr(-, root, root)
 
 %{libdir}/libndpi.so
-%{libdir}/libndpi.so.3
-%{libdir}/libndpi.so.3.4.0
+%{libdir}/libndpi.so.@MAJOR_RELEASE@
+%{libdir}/libndpi.so.@PACKAGE_VERSION@
 /usr/bin/ndpiReader
 /usr/share/ndpi/ndpiCustomCategory.txt
 /usr/share/ndpi/ndpiProtos.txt
