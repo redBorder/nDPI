@@ -1,0 +1,95 @@
+Summary: L7 DPI library
+Name: ndpi
+Version: 3.4.0
+Release: %{buildnumber}
+License: LGPL
+Group: Networking/Utilities
+URL: http://www.ntop.org/products/deep-packet-inspection/ndpi/
+Source: ndpi-%{version}.tgz
+Packager: Luca Deri <deri@ntop.org>
+BuildRoot:  %{_tmppath}/%{name}-%{version}-root
+%{?el7:Requires: glibc >= 2.3.4 numactl coreutils }
+%{?el6:Requires: glibc >= 2.3.4 numactl coreutils }
+AutoReqProv: no
+
+%define debug_package %{nil}
+
+%description
+nDPI Open and Extensible LGPLv3 Deep Packet Inspection Library.
+
+%package dev
+Summary: Header files and development libraries for %{name}
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+
+%description dev
+This package contains the header files and development libraries
+for %{name}. If you like to develop programs using %{name},
+you will need to install %{name}-dev.
+
+%prep
+
+%setup -q
+
+# Execution order:
+# install:    pre -> (copy) -> post
+# upgrade:    pre -> (copy) -> post -> preun (old) -> (delete old) -> postun (old)
+# un-install:                          preun       -> (delete)     -> postun
+
+%pre
+
+%post
+
+%build
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
+%define includedir    /usr/local/include/ndpi
+%define libdir        /usr/local/lib
+%define bindir        /usr/local/bin
+
+%install
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+if [ -d $RPM_BUILD_ROOT ]; then
+	\rm -rf $RPM_BUILD_ROOT
+fi
+mkdir -p $RPM_BUILD_ROOT%{includedir}
+mkdir -p $RPM_BUILD_ROOT%{libdir}
+mkdir -p $RPM_BUILD_ROOT%{bindir}
+cd $HOME/nDPI; make DESTDIR=$RPM_BUILD_ROOT install;
+rm $RPM_BUILD_ROOT%{libdir}/libndpi.so
+rm $RPM_BUILD_ROOT%{libdir}/libndpi.so.?
+cd $RPM_BUILD_ROOT%{libdir}/; ln -s libndpi.so.3.4.0 libndpi.so.3; cd -
+cd $RPM_BUILD_ROOT%{libdir}/; ln -s libndpi.so.3.4.0 libndpi.so; cd -
+mkdir -p $RPM_BUILD_ROOT/etc/ld.so.conf.d
+cp $HOME/nDPI/packages/etc/ld.so.conf.d/ndpi.conf $RPM_BUILD_ROOT/etc/ld.so.conf.d
+rm -rf $RPM_BUILD_ROOT/usr/local/sbin/ndpi
+strip $RPM_BUILD_ROOT%{bindir}/*
+rm -fr %{buildroot}%{includedir}/ndpi_win32.h
+#sed -i -e "s/#include \"ndpi_win32.h\"//g" %{buildroot}%{includedir}/ndpi_main.h
+
+%clean
+rm -fr $RPM_BUILD_ROOT
+
+%files
+%defattr(-, root, root)
+
+/usr/local/lib/libndpi.so
+/usr/local/lib/libndpi.so.3
+/usr/local/lib/libndpi.so.3.4.0
+/usr/local/bin/ndpiReader
+/usr/local/share/ndpi/ndpiCustomCategory.txt
+/usr/local/share/ndpi/ndpiProtos.txt
+/etc/ld.so.conf.d/ndpi.conf
+%{libdir}/pkgconfig/libndpi.pc
+
+%preun
+
+%files dev
+%defattr(-,root,root,-)
+
+%{includedir}
+%{libdir}/libndpi.a
+
+%changelog
+* Mon Nov 19 2018 Alfredo Cardigliano <cardigliano@ntop.org> 2.5
+- Initial package version
